@@ -271,9 +271,9 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
           )}
 
           <div className="form-group w-full mb-6">
-            <div className="flex flex-row justify-between items-center mb-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0 mb-3 w-full">
               <label className="label text-xs mb-0 text-white/70">Any additional comments?</label>
-              <div className="flex flex-row items-center gap-3">
+              <div className="flex flex-row items-center justify-end w-full sm:w-auto gap-3">
                 {autoFillEnabled && (positiveTags.length > 0 || negativeTags.length > 0) && (
                   <button 
                     type="button"
@@ -292,34 +292,33 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
                 </label>
               </div>
             </div>
-            <div className="relative">
-              <textarea 
-                className="textarea w-full text-base pb-12" 
-                placeholder="Share your thoughts here..."
-                value={message}
-                onChange={handleMessageChange}
-                rows={4}
-              />
-              <div className="absolute bottom-2 right-2">
-                 <button 
-                   type="button"
-                   onClick={handleCopy} 
-                   className="p-2 bg-black/20 hover:bg-black/40 rounded-lg backdrop-blur-sm transition-colors text-white flex items-center gap-2 border border-white/10 text-xs shadow-md"
-                 >
-                   {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
-                   {copied ? 'Copied' : 'Copy'}
-                 </button>
-              </div>
-            </div>
+            <textarea 
+              className="textarea w-full text-base" 
+              placeholder="Share your thoughts here..."
+              value={message}
+              onChange={handleMessageChange}
+              rows={4}
+            />
           </div>
           
-          <button 
-            className="btn btn-primary w-full shadow-lg" 
-            onClick={handleSubmit}
-            disabled={submitting}
-          >
-            {submitting ? 'Processing...' : 'Submit Feedback'}
-          </button>
+          <div className="flex flex-col gap-3 w-full">
+            <button 
+              type="button"
+              className="btn flex justify-center items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white w-full shadow-lg transition-all py-3"
+              onClick={handleCopy}
+            >
+              {copied ? <Check size={18} className="text-green-400" /> : <Copy size={18} />}
+              {copied ? 'Copied to Clipboard!' : 'Copy Review to Clipboard'}
+            </button>
+
+            <button 
+              className="btn btn-primary w-full shadow-lg py-3" 
+              onClick={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting ? 'Processing...' : 'Submit Feedback'}
+            </button>
+          </div>
         </div>
       )}
     </div>
