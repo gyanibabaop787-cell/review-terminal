@@ -17,15 +17,7 @@ export default function Home() {
             View Pricing
           </Link>
           
-          <div className="h-px bg-white/10 w-full my-4"></div>
-          
-          <h2 className="text-sm font-semibold text-muted uppercase tracking-wider mb-2">Live Demos</h2>
-          <Link href="/r/the-grand-plaza" className="btn btn-secondary text-sm py-3">
-            Demo: The Grand Plaza
-          </Link>
-          <Link href="/r/lumina-salon" className="btn btn-secondary text-sm py-3">
-            Demo: Lumina Salon
-          </Link>
+
         </div>
       </div>
     </div>

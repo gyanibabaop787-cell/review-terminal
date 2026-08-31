@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import StarRating from './StarRating';
+import { generateFeedback } from '@/lib/feedbackData';
 import { submitFeedback } from '@/lib/supabase';
+import { Shuffle, Copy, Check } from 'lucide-react';
 import { feedbackPhrases } from '@/lib/feedbackData';
-import { Shuffle } from 'lucide-react';
 
 interface ReviewFlowProps {
   business: {
@@ -23,11 +24,12 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
   const [positiveTags, setPositiveTags] = useState<string[]>([]);
   const [negativeTags, setNegativeTags] = useState<string[]>([]);
   
-  const [autoFillEnabled, setAutoFillEnabled] = useState(false);
+  const [autoFillEnabled, setAutoFillEnabled] = useState(true);
   const [autoFilledPhrases, setAutoFilledPhrases] = useState<{ [tag: string]: string }>({});
 
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleRatingChange = (val: number) => {
     setRating(val);
@@ -147,6 +149,27 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
     }
   };
 
+  const getFullText = () => {
+    const finalMessageParts = [];
+    if (positiveTags.length > 0) finalMessageParts.push(`Positive: ${positiveTags.join(', ')}`);
+    if (rating <= 3 && negativeTags.length > 0) finalMessageParts.push(`Negative: ${negativeTags.join(', ')}`);
+    if (message.trim()) finalMessageParts.push(`Feedback: ${message.trim()}`);
+    return finalMessageParts.join('\n\n');
+  };
+
+  const handleCopy = async () => {
+    const text = getFullText();
+    if (text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error('Clipboard copy failed', err);
+      }
+    }
+  };
+
   const handleSubmit = async () => {
     if (!rating) return;
     setSubmitting(true);
@@ -163,15 +186,8 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
       await submitFeedback(business.id, rating, finalMessage);
       
       if (rating >= 4) {
-         // It's a positive review. Let's copy text if they wrote any, and then redirect to Google!
-         if (finalMessage) {
-           try {
-             await navigator.clipboard.writeText(finalMessage);
-             alert("Your review has been copied to your clipboard! Please paste it on the Google Review page.");
-           } catch (clipboardErr) {
-             console.error('Clipboard copy failed', clipboardErr);
-           }
-         }
+         // It's a positive review. Let's redirect to Google!
+         // We removed the annoying copy alert here since the user has a dedicated Copy button now.
          window.location.href = business.google_review_url;
       } else {
          // It's a negative review, we show the internal "Thank you" screen
@@ -198,7 +214,7 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
   }
 
   return (
-    <div className="card animate-fade-in w-full max-w-sm mx-auto p-8">
+    <div className="card animate-fade-in w-full max-w-sm mx-auto p-5 sm:p-8">
       <div className="flex flex-col items-center mb-8">
         {business.logo_url && (
           <div className="relative">
@@ -277,12 +293,25 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
                 </label>
               </div>
             </div>
-            <textarea 
-              className="textarea w-full text-base" 
-              placeholder="Share your thoughts here..."
-              value={message}
-              onChange={handleMessageChange}
-            />
+            <div className="relative">
+              <textarea 
+                className="textarea w-full text-base pb-12" 
+                placeholder="Share your thoughts here..."
+                value={message}
+                onChange={handleMessageChange}
+                rows={4}
+              />
+              <div className="absolute bottom-2 right-2">
+                 <button 
+                   type="button"
+                   onClick={handleCopy} 
+                   className="p-2 bg-black/20 hover:bg-black/40 rounded-lg backdrop-blur-sm transition-colors text-white flex items-center gap-2 border border-white/10 text-xs shadow-md"
+                 >
+                   {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                   {copied ? 'Copied' : 'Copy'}
+                 </button>
+              </div>
+            </div>
           </div>
           
           <button 
