@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { getFeedbackByBusinessId } from '@/lib/supabase';
 import { Star } from 'lucide-react';
 
-export default function ReviewsTable({ businessId }: { businessId: string }) {
+export default function ReviewsTable({ businessId, refreshTick = 0 }: { businessId: string, refreshTick?: number }) {
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,7 +25,7 @@ export default function ReviewsTable({ businessId }: { businessId: string }) {
     if (businessId) {
       loadReviews();
     }
-  }, [businessId]);
+  }, [businessId, refreshTick]);
 
   if (!businessId) return null;
   if (loading) return <div className="text-center p-8 text-white/50">Loading reviews...</div>;

@@ -6,7 +6,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { getAllBusinesses, getSession, logoutUser } from '@/lib/supabase';
 import CreateBusinessForm from '@/components/CreateBusinessForm';
 import ReviewsTable from '@/components/ReviewsTable';
-import { QrCode, Download } from 'lucide-react';
+import { QrCode, Download, RefreshCw } from 'lucide-react';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -15,6 +15,7 @@ export default function AdminDashboard() {
   const [selectedBusiness, setSelectedBusiness] = useState<any>(null);
   const [view, setView] = useState<'select' | 'create'>('select');
   const [showQr, setShowQr] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -152,12 +153,24 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     
-                    <button 
-                      onClick={() => setShowQr(!showQr)}
-                      className="btn btn-secondary text-sm py-2 px-4 flex items-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10"
-                    >
-                      <QrCode size={16} /> {showQr ? 'Hide QR Code' : 'Generate QR Code'}
-                    </button>
+                    <div className="flex flex-row items-center gap-2 mt-4 md:mt-0">
+                      <button
+                        onClick={() => {
+                          loadBusinesses();
+                          setRefreshTick(prev => prev + 1);
+                        }}
+                        className="btn btn-secondary text-sm py-2 px-3 flex items-center justify-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10"
+                        title="Refresh Reviews"
+                      >
+                        <RefreshCw size={16} />
+                      </button>
+                      <button 
+                        onClick={() => setShowQr(!showQr)}
+                        className="btn btn-secondary text-sm py-2 px-4 flex items-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10"
+                      >
+                        <QrCode size={16} /> <span className="hidden sm:inline">{showQr ? 'Hide QR Code' : 'Generate QR Code'}</span>
+                      </button>
+                    </div>
                   </div>
 
                   {showQr && (
@@ -181,7 +194,7 @@ export default function AdminDashboard() {
                     </div>
                   )}
 
-                  <ReviewsTable businessId={selectedBusiness.id} />
+                  <ReviewsTable businessId={selectedBusiness.id} refreshTick={refreshTick} />
                 </div>
               )}
             </>
