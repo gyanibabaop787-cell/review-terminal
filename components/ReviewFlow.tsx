@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import StarRating from './StarRating';
-import { generateFeedback } from '@/lib/feedbackData';
 import { submitFeedback } from '@/lib/supabase';
 import { Shuffle, Copy, Check } from 'lucide-react';
 import { feedbackPhrases } from '@/lib/feedbackData';
