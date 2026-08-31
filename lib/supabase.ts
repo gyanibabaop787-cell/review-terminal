@@ -12,15 +12,15 @@ export const supabase = supabaseUrl && supabaseAnonKey
 export const MOCK_BUSINESSES = [
   {
     id: '1',
-    business_name: 'Bhandara Park Hotel',
-    slug: 'bhandara-park-hotel',
+    business_name: 'The Grand Plaza',
+    slug: 'the-grand-plaza',
     logo_url: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&h=200&fit=crop',
     google_review_url: 'https://google.com'
   },
   {
     id: '2',
-    business_name: 'Kalpna Restaurant',
-    slug: 'kalpna-restaurant',
+    business_name: 'Lumina Salon',
+    slug: 'lumina-salon',
     logo_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200&h=200&fit=crop',
     google_review_url: 'https://google.com'
   }
@@ -63,16 +63,24 @@ export async function submitFeedback(businessId: string, rating: number, message
   console.log('Feedback submitted:', { businessId, rating, message });
 }
 
-export async function createBusiness(businessData: { slug: string, business_name: string, logo_url: string, google_review_url: string }) {
+export async function createBusiness(businessData: { slug: string, business_name: string, logo_url: string, google_review_url: string, category?: string }) {
   if (supabase) {
+    // We intentionally omit 'category' from the payload to prevent schema errors 
+    // since the database table doesn't have a category column yet.
+    const payload = {
+      slug: businessData.slug,
+      business_name: businessData.business_name,
+      logo_url: businessData.logo_url,
+      google_review_url: businessData.google_review_url
+    };
+
     const { data, error } = await supabase
       .from('businesses')
-      .insert([businessData])
+      .insert([payload])
       .select()
       .single();
       
     if (error) {
-      // If it's a unique constraint error on slug, we might want to tell the user
       if (error.code === '23505') {
         throw new Error('A business with this generated URL slug already exists. Try slightly changing the business name.');
       }
@@ -81,7 +89,95 @@ export async function createBusiness(businessData: { slug: string, business_name
     return data;
   }
   
-  // Mock success
   await new Promise(resolve => setTimeout(resolve, 500));
   return { id: 'mock-id', ...businessData };
 }
+
+export async function getAllBusinesses() {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('businesses')
+      .select('*')
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
+    return data || [];
+  }
+  return MOCK_BUSINESSES;
+}
+
+export async function getFeedbackByBusinessId(businessId: string) {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('feedback')
+      .select('*')
+      .eq('business_id', businessId)
+      .order('created_at', { ascending: false });
+      
+    if (error) throw error;
+    return data || [];
+  }
+  
+  // Mock fallback
+  return [
+    { id: '1', rating: 5, message: 'Positive: The service was outstanding and extremely prompt.', created_at: new Date().toISOString() },
+    { id: '2', rating: 2, message: 'Negative: The service was incredibly slow and frustrating.', created_at: new Date(Date.now() - 86400000).toISOString() }
+  ];
+}
+
+export async function uploadLogo(file: File) {
+  if (!supabase) {
+    // Mock upload URL for offline development
+    return 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&h=200&fit=crop';
+  }
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('logos')
+    .upload(filePath, file);
+
+  if (uploadError) {
+    console.error('Upload Error Details:', uploadError);
+    throw new Error('Image upload failed. Ensure you have created a public bucket named "logos" in Supabase Storage.');
+  }
+
+  const { data } = supabase.storage.from('logos').getPublicUrl(filePath);
+  return data.publicUrl;
+}
+
+export async function registerUser(email: string, password: string) {
+  if (!supabase) throw new Error("Supabase is not configured");
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function loginUser(email: string, password: string) {
+  if (!supabase) throw new Error("Supabase is not configured");
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function logoutUser() {
+  if (!supabase) return;
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+}
+
+export async function getSession() {
+  if (!supabase) return null;
+  const { data, error } = await supabase.auth.getSession();
+  if (error) throw error;
+  return data.session;
+}
+
