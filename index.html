@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TW WILL Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --background: #f8fafc;
+      --foreground: #0f172a;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --muted: #64748b;
+      --success: #22c55e;
+      --star-active: #fbbf24;
+      --star-inactive: #e2e8f0;
+      --radius-md: 0.5rem;
+      --radius-xl: 1rem;
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    * { box-sizing: border-box; padding: 0; margin: 0; }
+    body { font-family: 'Inter', sans-serif; background-color: var(--background); color: var(--foreground); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem; }
+    
+    .view { display: none; width: 100%; max-width: 500px; flex-direction: column; align-items: center; }
+    .view.active { display: flex; }
+
+    .card { background-color: var(--surface); border-radius: var(--radius-xl); padding: 2.5rem 2rem; box-shadow: var(--shadow-lg); border: 1px solid var(--border); width: 100%; text-align: center; }
+    
+    .avatar { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 1rem; border: 3px solid white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    .title { font-size: 1.25rem; font-weight: 700; margin-bottom: 2rem; }
+    .question { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; }
+    
+    .pricing-grid { display: flex; flex-direction: column; gap: 1rem; width: 100%; margin-bottom: 1rem; }
+    .pricing-card { border: 2px solid var(--border); padding: 1.5rem; border-radius: var(--radius-md); text-align: left; background: var(--surface); cursor: pointer; transition: all 0.2s; position: relative; }
+    .pricing-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+    .badge { position: absolute; top: -10px; right: 10px; background: var(--primary); color: white; font-size: 0.7rem; font-weight: bold; padding: 2px 8px; border-radius: 12px; }
+
+    .stars { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; }
+    .star { background: none; border: none; cursor: pointer; padding: 0; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .star:hover { transform: scale(1.15); }
+    .star svg { width: 48px; height: 48px; fill: var(--star-inactive); color: var(--star-inactive); transition: fill 0.2s, color 0.2s; }
+    .star.active svg { fill: var(--star-active); color: var(--star-active); }
+    
+    .hidden { display: none !important; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.875rem 1.5rem; border-radius: var(--radius-md); font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; border: none; width: 100%; margin-bottom: 1rem; }
+    .btn-primary { background-color: var(--primary); color: white; }
+    .btn-primary:hover { background-color: var(--primary-hover); }
+    .btn-secondary { background-color: transparent; border: 1px solid var(--border); color: var(--foreground); }
+    .btn-secondary:hover { background-color: var(--background); }
+    
+    .input { width: 100%; padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border); background-color: var(--background); font-family: inherit; font-size: 1rem; margin-bottom: 1.5rem; outline: none; }
+    .input:focus { border-color: var(--primary); }
+    
+    .textarea { width: 100%; padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border); background-color: var(--background); font-family: inherit; font-size: 1rem; min-height: 120px; resize: vertical; margin-bottom: 1rem; outline: none; }
+    .textarea:focus { border-color: var(--primary); }
+    
+    .text-success { color: var(--success); }
+    .text-muted { color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem; }
+    .label { display: block; text-align: left; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.4s ease forwards; }
+  </style>
+</head>
+<body>
+
+  <!-- VIEW 1: Pricing & Subscription -->
+  <div id="view-pricing" class="view active animate-fade-in">
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--primary);">TW WILL</h1>
+      <p class="text-muted">Simple, mobile-first review platform.</p>
+    </div>
+    
+    <div class="pricing-grid">
+      <div class="pricing-card" onclick="simulatePayment('trial')">
+        <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">7 DAY FREE TRIAL</h2>
+        <div style="font-size: 1.5rem; font-weight: bold;">₹0 <span style="font-size: 0.9rem; font-weight: normal; color: var(--muted);">for 7 days</span></div>
+        <p class="text-muted" style="margin-bottom: 1rem; font-size: 0.85rem;">After trial: ₹299/month (~$10)</p>
+        <button class="btn btn-secondary" style="margin-bottom: 0;">Start Free Trial</button>
+      </div>
+
+      <div class="pricing-card" onclick="simulatePayment('6_months')">
+        <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">6 MONTH PLAN</h2>
+        <div style="font-size: 1.5rem; font-weight: bold;">₹1,699 <span style="font-size: 0.9rem; font-weight: normal; color: var(--muted);">/ 6 months</span></div>
+        <p class="text-muted" style="margin-bottom: 1rem; font-size: 0.85rem;">~ $55 / 6 months</p>
+        <button class="btn btn-secondary" style="margin-bottom: 0;">Subscribe 6 Months</button>
+      </div>
+      
+      <div class="pricing-card" onclick="simulatePayment('yearly')">
+        <div class="badge">MOST POPULAR</div>
+        <h2 style="font-size: 1.1rem; margin-bottom: 0.25rem;">YEARLY PLAN</h2>
+        <div style="font-size: 1.5rem; font-weight: bold;">₹3,199 <span style="font-size: 0.9rem; font-weight: normal; color: var(--muted);">/ year</span></div>
+        <p class="text-muted" style="margin-bottom: 1rem; font-size: 0.85rem;">~ $100 / year</p>
+        <button class="btn btn-primary" style="margin-bottom: 0;">Subscribe Yearly</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 2: Business Setup -->
+  <div id="view-setup" class="view animate-fade-in">
+    <div class="card">
+      <h1 class="title">Create Your Business</h1>
+      <p class="text-muted">Subscription successful! Let's set up your review page.</p>
+      
+      <div style="text-align: left;">
+        <label class="label">Business Name</label>
+        <input type="text" id="businessNameInput" class="input" placeholder="e.g. Bhandara Park Hotel">
+      </div>
+      
+      <button class="btn btn-primary" onclick="saveBusiness()">Generate Review Page</button>
+    </div>
+  </div>
+
+  <!-- VIEW 3: Admin Dashboard (Link) -->
+  <div id="view-admin" class="view animate-fade-in">
+    <div class="card">
+      <h1 class="title text-success">Setup Complete!</h1>
+      <p class="text-muted">Customers can now scan your QR code or visit this link to leave reviews.</p>
+      
+      <div style="background: var(--background); padding: 1rem; border-radius: var(--radius-md); font-family: monospace; font-size: 0.9rem; margin-bottom: 1.5rem; word-break: break-all;" id="generatedLink">
+        twwill.com/r/...
+      </div>
+      
+      <button class="btn btn-primary" onclick="openReviewPage()">Open Customer View</button>
+    </div>
+  </div>
+
+  <!-- VIEW 4: The Review Page -->
+  <div id="view-review" class="view animate-fade-in">
+    <div class="card" id="mainCard">
+      <!-- Business details dynamically injected here -->
+      <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&h=200&fit=crop" alt="Logo" class="avatar">
+      <h1 class="title" id="displayBusinessName">Business Name</h1>
+
+      <h2 class="question" id="questionText">How was your experience?</h2>
+
+      <div class="stars" id="starsContainer">
+        <button class="star" data-value="1"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
+        <button class="star" data-value="2"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
+        <button class="star" data-value="3"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
+        <button class="star" data-value="4"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
+        <button class="star" data-value="5"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
+      </div>
+
+      <!-- Positive Flow -->
+      <div id="positiveFlow" class="hidden animate-fade-in">
+        <h3 class="title text-success" style="margin-bottom: 0.5rem;">Thanks for your feedback!</h3>
+        <p class="text-muted">Would you like to leave us a Google review?</p>
+        
+        <div style="text-align: left; margin-top: 1rem;">
+          <label class="label">Tell us more (optional)</label>
+          <textarea class="textarea" placeholder="What did you like or what could we improve?"></textarea>
+        </div>
+        
+        <button class="btn btn-secondary" onclick="submitFeedback()">Submit Private Feedback</button>
+        <button class="btn btn-primary" onclick="window.open('https://google.com', '_blank')">Leave a Google Review</button>
+      </div>
+
+      <!-- Negative Flow -->
+      <div id="negativeFlow" class="hidden animate-fade-in">
+        <h3 class="title" style="margin-bottom: 0.5rem;">We're sorry your experience wasn't perfect.</h3>
+        <p class="text-muted">Please tell us what we could improve.</p>
+        
+        <div style="text-align: left; margin-top: 1rem;">
+          <label class="label">Tell us about your experience...</label>
+          <textarea class="textarea" placeholder="Tell us what went wrong..." id="negativeFeedback"></textarea>
+        </div>
+        
+        <button class="btn btn-primary" onclick="submitFeedback()">Send Feedback</button>
+      </div>
+
+      <!-- Success Screen -->
+      <div id="successScreen" class="hidden animate-fade-in">
+        <h2 class="title" style="margin-bottom: 1rem;">Thank you for your feedback.</h2>
+        <p class="text-muted">We appreciate you taking the time to help us improve.</p>
+        
+        <button class="btn btn-secondary" style="margin-top: 1rem;" onclick="resetDemo()">Restart Demo</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // --- Navigation Logic ---
+    function switchView(viewId) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(viewId).classList.add('active');
+    }
+
+    function simulatePayment(plan) {
+      alert("Simulating payment authorization for " + plan + " plan...");
+      switchView('view-setup');
+    }
+
+    function saveBusiness() {
+      const name = document.getElementById('businessNameInput').value;
+      if (!name) return alert("Please enter a business name");
+      
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      document.getElementById('generatedLink').innerText = `twwill.com/r/${slug}`;
+      document.getElementById('displayBusinessName').innerText = name;
+      
+      switchView('view-admin');
+    }
+
+    function openReviewPage() {
+      switchView('view-review');
+    }
+
+    function resetDemo() {
+      // Reset review UI state
+      currentRating = 0;
+      updateStars(0);
+      document.getElementById('questionText').classList.remove('hidden');
+      document.getElementById('positiveFlow').classList.add('hidden');
+      document.getElementById('negativeFlow').classList.add('hidden');
+      document.getElementById('starsContainer').classList.remove('hidden');
+      document.querySelector('.avatar').classList.remove('hidden');
+      document.getElementById('displayBusinessName').classList.remove('hidden');
+      document.getElementById('successScreen').classList.add('hidden');
+      
+      switchView('view-pricing'); // Go back to start
+    }
+
+    // --- Review Logic ---
+    const stars = document.querySelectorAll('.star');
+    let currentRating = 0;
+
+    stars.forEach(star => {
+      star.addEventListener('mouseover', () => {
+        // Now you can hover and change rating EVEN if selected already
+        updateStars(star.dataset.value);
+      });
+      
+      star.addEventListener('mouseout', () => {
+        // Return to the selected rating when mouse leaves
+        updateStars(currentRating);
+      });
+
+      star.addEventListener('click', () => {
+        // Now you can CLICK multiple times to change the rating!
+        currentRating = parseInt(star.dataset.value);
+        updateStars(currentRating);
+        showFlow(currentRating);
+      });
+    });
+
+    function updateStars(value) {
+      stars.forEach(s => {
+        if (parseInt(s.dataset.value) <= value) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
+    }
+
+    function showFlow(rating) {
+      // Show correct flow based on rating
+      if (rating >= 4) {
+        document.getElementById('positiveFlow').classList.remove('hidden');
+        document.getElementById('negativeFlow').classList.add('hidden');
+      } else if (rating > 0) {
+        document.getElementById('negativeFlow').classList.remove('hidden');
+        document.getElementById('positiveFlow').classList.add('hidden');
+      }
+    }
+
+    function submitFeedback() {
+      // Hide flows and stars, show success
+      document.getElementById('starsContainer').classList.add('hidden');
+      document.getElementById('positiveFlow').classList.add('hidden');
+      document.getElementById('negativeFlow').classList.add('hidden');
+      document.querySelector('.avatar').classList.add('hidden');
+      document.getElementById('displayBusinessName').classList.add('hidden');
+      document.getElementById('questionText').classList.add('hidden');
+
+      document.getElementById('successScreen').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
