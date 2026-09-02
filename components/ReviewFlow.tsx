@@ -173,21 +173,27 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
     if (!rating) return;
     setSubmitting(true);
     
-    const finalMessageParts = [];
-    if (positiveTags.length > 0) finalMessageParts.push(`Positive: ${positiveTags.join(', ')}`);
-    if (negativeTags.length > 0) finalMessageParts.push(`Negative: ${negativeTags.join(', ')}`);
-    if (message.trim()) finalMessageParts.push(`Feedback: ${message.trim()}`);
-    
-    const finalMessage = finalMessageParts.join('\n\n');
+    const text = getFullText();
 
     try {
       // Always submit the rating to our database first, even if they didn't write any text
-      await submitFeedback(business.id, rating, finalMessage);
+      await submitFeedback(business.id, rating, text);
       
       if (rating >= 4) {
-         // It's a positive review. Let's redirect to Google!
-         // We removed the annoying copy alert here since the user has a dedicated Copy button now.
-         window.location.href = business.google_review_url;
+         // Auto-copy the review text
+         if (text) {
+           try {
+             await navigator.clipboard.writeText(text);
+             setCopied(true);
+           } catch (err) {
+             console.error('Clipboard copy failed', err);
+           }
+         }
+         
+         // Delay the redirect slightly so they can see the "Copied!" state
+         setTimeout(() => {
+           window.location.href = business.google_review_url;
+         }, 1500);
       } else {
          // It's a negative review, we show the internal "Thank you" screen
          setSubmitted(true);
@@ -316,7 +322,7 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
               onClick={handleSubmit}
               disabled={submitting}
             >
-              {submitting ? 'Processing...' : 'Submit Feedback'}
+              {submitting ? (copied ? 'Copied! Redirecting to Google...' : 'Processing...') : 'Submit Feedback'}
             </button>
           </div>
         </div>
