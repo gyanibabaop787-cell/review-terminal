@@ -1,38 +1,24 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { getAllBusinesses, getSession, logoutUser } from '@/lib/supabase';
+import { getAllBusinesses } from '@/lib/supabase';
 import CreateBusinessForm from '@/components/CreateBusinessForm';
 import ReviewsTable from '@/components/ReviewsTable';
 import { QrCode, Download, RefreshCw } from 'lucide-react';
+import html2canvas from 'html2canvas';
 
 export default function AdminDashboard() {
-  const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [selectedBusiness, setSelectedBusiness] = useState<any>(null);
   const [view, setView] = useState<'select' | 'create'>('select');
   const [showQr, setShowQr] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
+  const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const session = await getSession();
-        if (!session) {
-          router.push('/login');
-        } else {
-          setIsAuthenticated(true);
-          loadBusinesses();
-        }
-      } catch (e) {
-        router.push('/login');
-      }
-    };
-    checkAuth();
-  }, [router]);
+    loadBusinesses();
+  }, []);
 
   const loadBusinesses = async () => {
     try {
@@ -46,47 +32,24 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleLogout = async () => {
+  const downloadQr = async (slug: string) => {
+    if (!qrRef.current) return;
     try {
-      await logoutUser();
-      router.push('/login');
-    } catch (err) {
-      console.error("Logout failed", err);
-    }
-  };
-
-  const downloadQr = (slug: string) => {
-    const svg = document.getElementById('qr-code');
-    if (!svg) return;
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      if (ctx) {
-        // Fill white background for the PNG
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-      }
+      const canvas = await html2canvas(qrRef.current, { scale: 3, backgroundColor: null });
       const pngFile = canvas.toDataURL('image/png');
       const downloadLink = document.createElement('a');
-      downloadLink.download = `${slug}-qr.png`;
-      downloadLink.href = `${pngFile}`;
+      downloadLink.download = `${slug}-google-review-qr.png`;
+      downloadLink.href = pngFile;
       downloadLink.click();
-    };
-    img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+    } catch (err) {
+      console.error('Failed to generate image', err);
+    }
   };
-
-  if (!isAuthenticated) return null;
 
   return (
     <div className="container min-h-screen py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
-        <button onClick={handleLogout} className="btn bg-white/10 hover:bg-white/20 text-white text-sm py-2">Logout</button>
       </div>
 
       <div className="flex gap-4 mb-8">
@@ -175,21 +138,66 @@ export default function AdminDashboard() {
 
                   {showQr && (
                     <div className="bg-black/20 border border-white/10 rounded-xl p-6 mb-6 flex flex-col items-center animate-fade-in backdrop-blur-md">
-                      <h3 className="text-white font-bold mb-4">Scan to Review</h3>
-                      <div className="bg-white p-4 rounded-xl shadow-lg mb-4">
-                        <QRCodeSVG 
-                          id="qr-code"
-                          value={`${window.location.origin}/r/${selectedBusiness.slug}`} 
-                          size={180}
-                          level="H"
-                          includeMargin={true}
-                        />
+                      <div className="mb-4 text-center">
+                        <p className="text-sm text-white/70 mb-2">This is exactly how your downloaded PNG will look.</p>
                       </div>
+                      
+                      {/* The QR Card that will be downloaded */}
+                      <div 
+                        ref={qrRef}
+                        className="bg-white rounded-3xl shadow-2xl p-8 flex flex-col items-center justify-center relative overflow-hidden"
+                        style={{ width: '400px', height: '550px' }}
+                      >
+                        {/* Decorative top border in Google colors */}
+                        <div className="absolute top-0 left-0 w-full h-3 flex">
+                          <div className="h-full flex-1" style={{ backgroundColor: '#4285F4' }}></div>
+                          <div className="h-full flex-1" style={{ backgroundColor: '#EA4335' }}></div>
+                          <div className="h-full flex-1" style={{ backgroundColor: '#FBBC05' }}></div>
+                          <div className="h-full flex-1" style={{ backgroundColor: '#34A853' }}></div>
+                        </div>
+
+                        <div className="text-center mb-6 mt-4">
+                          <h2 className="text-4xl font-extrabold mb-1" style={{ color: '#202124' }}>
+                            <span style={{ color: '#4285F4' }}>G</span>
+                            <span style={{ color: '#EA4335' }}>o</span>
+                            <span style={{ color: '#FBBC05' }}>o</span>
+                            <span style={{ color: '#4285F4' }}>g</span>
+                            <span style={{ color: '#34A853' }}>l</span>
+                            <span style={{ color: '#EA4335' }}>e</span>
+                            <span className="ml-2">Review</span>
+                          </h2>
+                          <p className="text-xl font-medium" style={{ color: '#5f6368' }}>Review us on Google</p>
+                        </div>
+
+                        <div className="bg-white p-2 rounded-2xl shadow-sm mb-6 border-2 border-gray-100">
+                          <QRCodeSVG 
+                            value={`${window.location.origin}/r/${selectedBusiness.slug}`} 
+                            size={220}
+                            level="H"
+                            includeMargin={false}
+                            fgColor="#202124"
+                          />
+                        </div>
+
+                        <div className="text-center w-full px-4">
+                          <h3 className="text-2xl font-bold mb-1 truncate" style={{ color: '#202124' }}>
+                            {selectedBusiness.business_name}
+                          </h3>
+                          <div className="flex justify-center items-center gap-1 mt-2">
+                            {[1,2,3,4,5].map(i => (
+                              <svg key={i} width="24" height="24" viewBox="0 0 24 24" fill="#FBBC05" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                              </svg>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
                       <button 
                         onClick={() => downloadQr(selectedBusiness.slug)}
-                        className="btn btn-primary shadow-lg flex items-center gap-2"
+                        className="btn btn-primary shadow-lg flex items-center gap-2 mt-6"
                       >
-                        <Download size={16} /> Download PNG
+                        <Download size={16} /> Download High-Res PNG
                       </button>
                     </div>
                   )}
