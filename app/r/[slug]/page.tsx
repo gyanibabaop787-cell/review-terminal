@@ -3,6 +3,8 @@ import ReviewFlow from '@/components/ReviewFlow';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
   params: {
     slug: string;
