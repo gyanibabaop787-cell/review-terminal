@@ -201,9 +201,9 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
          // It's a negative review, we show the internal "Thank you" screen
          setSubmitted(true);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Something went wrong. Please try again.');
+      alert(`Database Error: ${err.message || 'Unknown error'}`);
       setSubmitting(false);
     }
   };

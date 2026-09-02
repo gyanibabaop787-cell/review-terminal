@@ -1,14 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { QRCodeSVG } from 'qrcode.react';
-import { getAllBusinesses } from '@/lib/supabase';
+import { getAllBusinesses, getSession, logoutUser } from '@/lib/supabase';
 import CreateBusinessForm from '@/components/CreateBusinessForm';
 import ReviewsTable from '@/components/ReviewsTable';
-import { QrCode, Download, RefreshCw } from 'lucide-react';
+import { QrCode, Download, RefreshCw, Copy } from 'lucide-react';
 import html2canvas from 'html2canvas';
 
 export default function AdminDashboard() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [selectedBusiness, setSelectedBusiness] = useState<any>(null);
   const [view, setView] = useState<'select' | 'create'>('select');
@@ -17,8 +20,21 @@ export default function AdminDashboard() {
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadBusinesses();
-  }, []);
+    const checkAuth = async () => {
+      try {
+        const session = await getSession();
+        if (!session) {
+          router.push('/login');
+        } else {
+          setIsAuthenticated(true);
+          loadBusinesses();
+        }
+      } catch (e) {
+        router.push('/login');
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   const loadBusinesses = async () => {
     try {
@@ -46,10 +62,22 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      router.push('/login');
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+  };
+
+  if (!isAuthenticated) return null;
+
   return (
     <div className="container min-h-screen py-10">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
+        <button onClick={handleLogout} className="btn bg-white/10 hover:bg-white/20 text-white text-sm py-2">Logout</button>
       </div>
 
       <div className="flex gap-4 mb-8">
@@ -128,10 +156,19 @@ export default function AdminDashboard() {
                         <RefreshCw size={16} />
                       </button>
                       <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/r/${selectedBusiness.slug}`);
+                          alert("Public review link copied to clipboard!");
+                        }}
+                        className="btn btn-secondary text-sm py-2 px-4 flex items-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10"
+                      >
+                        <Copy size={16} /> <span className="hidden sm:inline">Copy Link</span>
+                      </button>
+                      <button 
                         onClick={() => setShowQr(!showQr)}
                         className="btn btn-secondary text-sm py-2 px-4 flex items-center gap-2 bg-white/5 border border-white/10 hover:bg-white/10"
                       >
-                        <QrCode size={16} /> <span className="hidden sm:inline">{showQr ? 'Hide QR Code' : 'Generate QR Code'}</span>
+                        <QrCode size={16} /> <span className="hidden sm:inline">{showQr ? 'Hide QR Code' : 'Generate QR'}</span>
                       </button>
                     </div>
                   </div>
