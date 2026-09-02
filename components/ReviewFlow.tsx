@@ -169,6 +169,8 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
     }
   };
 
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
   const handleSubmit = async () => {
     if (!rating) return;
     setSubmitting(true);
@@ -190,6 +192,7 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
            }
          }
          
+         setIsRedirecting(true);
          // Delay the redirect slightly so they can see the "Copied!" state
          setTimeout(() => {
            window.location.href = business.google_review_url;
@@ -322,7 +325,11 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
               onClick={handleSubmit}
               disabled={submitting}
             >
-              {submitting ? (copied ? 'Copied! Redirecting to Google...' : 'Processing...') : 'Submit Feedback'}
+              {submitting 
+                ? (isRedirecting 
+                    ? (copied ? 'Copied! Redirecting to Google...' : 'Redirecting to Google...') 
+                    : 'Processing...') 
+                : 'Submit Feedback'}
             </button>
           </div>
         </div>
