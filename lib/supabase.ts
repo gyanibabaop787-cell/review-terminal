@@ -23,6 +23,13 @@ export const MOCK_BUSINESSES = [
     slug: 'lumina-salon',
     logo_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200&h=200&fit=crop',
     google_review_url: 'https://google.com'
+  },
+  {
+    id: '3',
+    business_name: 'Danial',
+    slug: 'danial',
+    logo_url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200&h=200&fit=crop',
+    google_review_url: 'https://google.com'
   }
 ];
 

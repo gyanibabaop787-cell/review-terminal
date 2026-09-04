@@ -5,6 +5,7 @@ import StarRating from './StarRating';
 import { submitFeedback } from '@/lib/supabase';
 import { Shuffle, Copy, Check } from 'lucide-react';
 import { feedbackPhrases } from '@/lib/feedbackData';
+import { feedbackPhrasesHindi } from '@/lib/feedbackDataHindi';
 
 interface ReviewFlowProps {
   business: {
@@ -29,6 +30,31 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [feedbackLanguage, setFeedbackLanguage] = useState<'en' | 'hi'>('en');
+
+  const handleLanguageToggle = () => {
+    const newLang = feedbackLanguage === 'en' ? 'hi' : 'en';
+    setFeedbackLanguage(newLang);
+    
+    if (autoFillEnabled && (positiveTags.length > 0 || negativeTags.length > 0)) {
+      const newActivePhrases = newLang === 'hi' ? feedbackPhrasesHindi : feedbackPhrases;
+      const newPhrases: { [tag: string]: string } = {};
+      
+      positiveTags.forEach(tag => {
+        const phrases = newActivePhrases['positive'][tag as keyof typeof newActivePhrases['positive']];
+        newPhrases[tag] = phrases[Math.floor(Math.random() * phrases.length)];
+      });
+      
+      negativeTags.forEach(tag => {
+        const phrases = newActivePhrases['negative'][tag as keyof typeof newActivePhrases['negative']];
+        newPhrases[tag] = phrases[Math.floor(Math.random() * phrases.length)];
+      });
+      
+      setAutoFilledPhrases(newPhrases);
+      const newMsg = Object.values(newPhrases).join(' ');
+      setMessage(newMsg);
+    }
+  };
 
   const handleRatingChange = (val: number) => {
     setRating(val);
@@ -38,7 +64,9 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
       setAutoFilledPhrases(prev => {
         const updated = { ...prev };
         TAGS.forEach(tag => {
-          if (feedbackPhrases.negative[tag as keyof typeof feedbackPhrases.negative].includes(updated[tag])) {
+          const inEng = feedbackPhrases.negative[tag as keyof typeof feedbackPhrases.negative].includes(updated[tag]);
+          const inHin = feedbackPhrasesHindi.negative[tag as keyof typeof feedbackPhrasesHindi.negative].includes(updated[tag]);
+          if (inEng || inHin) {
             delete updated[tag];
           }
         });
@@ -72,7 +100,8 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
     if (autoFillEnabled) {
       if (isSelecting) {
         // Pick a random phrase
-        const phrases = feedbackPhrases[type][tag as keyof typeof feedbackPhrases['positive']];
+        const activePhrases = feedbackLanguage === 'hi' ? feedbackPhrasesHindi : feedbackPhrases;
+        const phrases = activePhrases[type][tag as keyof typeof activePhrases['positive']];
         const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
         
         setAutoFilledPhrases(prev => {
@@ -100,15 +129,16 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
       setMessage('');
     } else {
       // Generate phrases for already selected tags
+      const activePhrases = feedbackLanguage === 'hi' ? feedbackPhrasesHindi : feedbackPhrases;
       const newPhrases: { [tag: string]: string } = {};
       
       positiveTags.forEach(tag => {
-        const phrases = feedbackPhrases['positive'][tag as keyof typeof feedbackPhrases['positive']];
+        const phrases = activePhrases['positive'][tag as keyof typeof activePhrases['positive']];
         newPhrases[tag] = phrases[Math.floor(Math.random() * phrases.length)];
       });
       
       negativeTags.forEach(tag => {
-        const phrases = feedbackPhrases['negative'][tag as keyof typeof feedbackPhrases['negative']];
+        const phrases = activePhrases['negative'][tag as keyof typeof activePhrases['negative']];
         newPhrases[tag] = phrases[Math.floor(Math.random() * phrases.length)];
       });
       
@@ -119,15 +149,16 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
 
   const randomizePhrases = () => {
     if (!autoFillEnabled) return;
+    const activePhrases = feedbackLanguage === 'hi' ? feedbackPhrasesHindi : feedbackPhrases;
     const newPhrases: { [tag: string]: string } = {};
     
     positiveTags.forEach(tag => {
-      const phrases = feedbackPhrases['positive'][tag as keyof typeof feedbackPhrases['positive']];
+      const phrases = activePhrases['positive'][tag as keyof typeof activePhrases['positive']];
       newPhrases[tag] = phrases[Math.floor(Math.random() * phrases.length)];
     });
     
     negativeTags.forEach(tag => {
-      const phrases = feedbackPhrases['negative'][tag as keyof typeof feedbackPhrases['negative']];
+      const phrases = activePhrases['negative'][tag as keyof typeof activePhrases['negative']];
       newPhrases[tag] = phrases[Math.floor(Math.random() * phrases.length)];
     });
     
@@ -136,8 +167,70 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
   };
 
   const rebuildMessage = (phrasesObj: { [key: string]: string }) => {
-    const newMsg = Object.values(phrasesObj).join(' ');
-    setMessage(newMsg);
+    const activeEng = feedbackPhrases;
+    const activeHin = feedbackPhrasesHindi;
+    
+    const posPhrases: string[] = [];
+    const negPhrases: string[] = [];
+    
+    Object.entries(phrasesObj).forEach(([tag, phrase]) => {
+      const isPosEng = activeEng.positive[tag as keyof typeof activeEng.positive]?.includes(phrase);
+      const isPosHin = activeHin.positive[tag as keyof typeof activeHin.positive]?.includes(phrase);
+      if (isPosEng || isPosHin) posPhrases.push(phrase);
+      else negPhrases.push(phrase);
+    });
+
+    const joinPhrases = (phrases: string[], type: 'pos' | 'neg') => {
+      if (phrases.length === 0) return "";
+      let res = phrases[0];
+      for (let i = 1; i < phrases.length; i++) {
+        const nextPhrase = phrases[i];
+        const isHi = feedbackLanguage === 'hi';
+        const strategy = Math.random() > 0.5 ? 'and' : 'also';
+        let strippedRes = res.replace(/(\.|।)$/, '');
+        let lowerNext = nextPhrase.charAt(0).toLowerCase() + nextPhrase.slice(1);
+
+        if (strategy === 'and') {
+          const joiner = isHi ? " और " : " and ";
+          res = strippedRes + joiner + lowerNext;
+        } else {
+          const joiner = isHi ? "। इसके अलावा, " : ". Also, ";
+          res = strippedRes + joiner + lowerNext;
+        }
+        
+        if (!res.endsWith('.') && !res.endsWith('।')) {
+           res += isHi ? '।' : '.';
+        }
+      }
+      return res;
+    };
+
+    let finalMsg = "";
+    const posStr = joinPhrases(posPhrases, 'pos');
+    const negStr = joinPhrases(negPhrases, 'neg');
+
+    if (posStr && negStr) {
+       const isHi = feedbackLanguage === 'hi';
+       const strategy = Math.random() > 0.5 ? 'but' : 'however';
+       let strippedPos = posStr.replace(/(\.|।)$/, '');
+       let lowerNeg = negStr.charAt(0).toLowerCase() + negStr.slice(1);
+       
+       if (strategy === 'but') {
+         const joiner = isHi ? " लेकिन " : " but ";
+         finalMsg = strippedPos + joiner + lowerNeg;
+       } else {
+         const joiner = isHi ? "। पर " : ". However, ";
+         finalMsg = strippedPos + joiner + lowerNeg;
+       }
+       
+       if (!finalMsg.endsWith('.') && !finalMsg.endsWith('।')) {
+           finalMsg += isHi ? '।' : '.';
+       }
+    } else {
+       finalMsg = posStr || negStr;
+    }
+
+    setMessage(finalMsg);
   };
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -246,6 +339,27 @@ export default function ReviewFlow({ business }: ReviewFlowProps) {
 
       {rating > 0 && (
         <div className="animate-fade-in flex flex-col items-start w-full mt-6">
+          
+          <div className="w-full flex justify-between items-center mb-6 bg-white/5 rounded-2xl p-2 sm:p-3 border border-white/10 shadow-lg relative overflow-hidden group">
+             <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-purple-500/10 opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
+             <span className="text-sm text-white/90 font-medium ml-2 relative z-10">Feedback Language</span>
+             <button 
+               type="button"
+               onClick={(e) => {
+                 e.preventDefault();
+                 e.stopPropagation();
+                 handleLanguageToggle();
+               }}
+               className="lang-toggle"
+             >
+                <div 
+                  className="lang-toggle-thumb"
+                  style={{ transform: feedbackLanguage === 'hi' ? 'translateX(64px)' : 'translateX(0)' }}
+                />
+                <span className={`lang-toggle-text ${feedbackLanguage === 'en' ? 'active' : 'inactive'}`}>English</span>
+                <span className={`lang-toggle-text ${feedbackLanguage === 'hi' ? 'active' : 'inactive'}`}>Hindi</span>
+             </button>
+          </div>
           
           <div className="w-full mb-6">
             <h3 className="text-sm font-bold mb-3 uppercase tracking-wider text-gradient-positive">What did we do well? (Positive)</h3>
