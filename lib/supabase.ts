@@ -181,3 +181,26 @@ export async function getSession() {
   return data.session;
 }
 
+export async function deleteFeedback(id: string) {
+  if (supabase) {
+    const { error } = await supabase
+      .from('feedback')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    return;
+  }
+  await new Promise(resolve => setTimeout(resolve, 500));
+}
+
+export async function deleteAllFeedbackByBusinessId(businessId: string) {
+  if (supabase) {
+    const { error } = await supabase
+      .from('feedback')
+      .delete()
+      .eq('business_id', businessId);
+    if (error) throw error;
+    return;
+  }
+  await new Promise(resolve => setTimeout(resolve, 500));
+}
