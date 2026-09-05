@@ -190,11 +190,14 @@ export async function getSession() {
 
 export async function deleteFeedback(id: string) {
   if (supabase) {
-    const { error } = await supabase
+    const { error, count } = await supabase
       .from('feedback')
-      .delete()
+      .delete({ count: 'exact' })
       .eq('id', id);
     if (error) throw error;
+    if (count === 0) {
+      throw new Error("Could not delete. Make sure you have a Supabase RLS Policy allowing 'DELETE' on the 'feedback' table.");
+    }
     return;
   }
   await new Promise(resolve => setTimeout(resolve, 500));
@@ -202,11 +205,14 @@ export async function deleteFeedback(id: string) {
 
 export async function deleteAllFeedbackByBusinessId(businessId: string) {
   if (supabase) {
-    const { error } = await supabase
+    const { error, count } = await supabase
       .from('feedback')
-      .delete()
+      .delete({ count: 'exact' })
       .eq('business_id', businessId);
     if (error) throw error;
+    if (count === 0) {
+      throw new Error("Could not delete. Make sure you have a Supabase RLS Policy allowing 'DELETE' on the 'feedback' table.");
+    }
     return;
   }
   await new Promise(resolve => setTimeout(resolve, 500));

@@ -92,62 +92,81 @@ export default function ReviewsTable({ businessId, refreshTick = 0 }: { business
           <Trash2 size={16} /> Delete All Reviews
         </button>
       </div>
-      <div className="w-full overflow-x-auto bg-black/20 rounded-xl border border-white/10 backdrop-blur-md">
-        <table className="w-full text-left text-sm text-white/80">
-          <thead className="bg-white/5 text-white/90 uppercase font-semibold text-xs border-b border-white/10">
-            <tr>
-              <th className="px-6 py-4">Date</th>
-              <th className="px-6 py-4">Stars</th>
-              <th className="px-6 py-4">Sentiment</th>
-              <th className="px-6 py-4">Points Selected</th>
-              <th className="px-6 py-4">Review Text</th>
-              <th className="px-6 py-4 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reviews.map((reviewData) => {
-              const { sentiment, points, review } = parseFeedback(reviewData.message, reviewData.rating);
-              
-              return (
-                <tr key={reviewData.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {new Date(reviewData.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-1 items-center">
-                      <span className="font-bold mr-1">{reviewData.rating}</span>
-                      <Star size={14} className={reviewData.rating >= 4 ? 'text-green-400 fill-green-400' : 'text-red-400 fill-red-400'} />
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-md text-xs font-bold ${sentiment === 'Positive' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                      {sentiment}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {points !== '-' ? points.split(', ').map(p => (
-                        <span key={p} className="bg-white/5 px-2 py-1 rounded text-xs border border-white/10">{p}</span>
-                      )) : <span className="text-white/30 italic">-</span>}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4" style={{ minWidth: '350px', maxWidth: '800px' }}>
-                    <p className="whitespace-pre-wrap text-base leading-relaxed">{review === '-' ? <span className="text-white/30 italic">No text provided</span> : review}</p>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => handleDelete(reviewData.id)}
-                      className="text-white/30 hover:text-red-400 transition-colors"
-                      title="Delete Review"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {reviews.map((reviewData) => {
+          const { sentiment, points, review } = parseFeedback(reviewData.message, reviewData.rating);
+          
+          return (
+            <div key={reviewData.id} className="bg-black/40 border border-white/10 rounded-2xl p-6 flex flex-col hover:bg-white/5 transition-all duration-300 relative group overflow-hidden">
+              {/* Top Section: Rating & Date */}
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-1 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+                  <span className="font-bold text-white mr-1 text-sm">{reviewData.rating}.0</span>
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star 
+                        key={star}
+                        size={14} 
+                        className={star <= reviewData.rating 
+                          ? (reviewData.rating >= 4 ? 'text-green-400 fill-green-400' : 'text-red-400 fill-red-400') 
+                          : 'text-white/20'
+                        } 
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="text-xs text-white/40 font-medium">
+                  {new Date(reviewData.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                </div>
+              </div>
+
+              {/* Sentiment Badge */}
+              <div className="mb-4">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold inline-flex items-center shadow-sm ${
+                  sentiment === 'Positive' 
+                    ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
+                    : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full mr-2 ${sentiment === 'Positive' ? 'bg-green-400' : 'bg-red-400'}`}></span>
+                  {sentiment} Experience
+                </span>
+              </div>
+
+              {/* Points Selected */}
+              {points !== '-' && (
+                <div className="mb-4">
+                  <div className="text-xs text-white/50 mb-2 font-medium uppercase tracking-wider">Tags</div>
+                  <div className="flex flex-wrap gap-2">
+                    {points.split(', ').map(p => (
+                      <span key={p} className="bg-white/5 px-2.5 py-1 rounded-md text-xs border border-white/10 text-white/80">{p}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Review Text */}
+              <div className="flex-1 min-h-[80px]">
+                <div className="text-xs text-white/50 mb-2 font-medium uppercase tracking-wider">Feedback</div>
+                <div className="bg-white/5 rounded-xl p-4 border border-white/5 h-full">
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/90">
+                    {review === '-' ? <span className="text-white/30 italic">No text provided by the customer.</span> : review}
+                  </p>
+                </div>
+              </div>
+
+              {/* Delete Action Overlay */}
+              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  onClick={() => handleDelete(reviewData.id)}
+                  className="bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white p-2 rounded-full backdrop-blur-md border border-red-500/30 transition-all shadow-lg"
+                  title="Delete Review"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
