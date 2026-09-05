@@ -16,7 +16,7 @@ interface ReviewFlowProps {
   };
 }
 
-const TAGS = ['Serving', 'Staff Behaviour', 'Cleaning', 'Room Quality'];
+const TAGS = ['Serving', 'Staff Behaviour', 'Cleaning', 'Room Quality', 'Event', 'Marriage'];
 
 export default function ReviewFlow({ business }: ReviewFlowProps) {
   const [rating, setRating] = useState(0);
